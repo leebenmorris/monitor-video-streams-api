@@ -2,12 +2,13 @@
     "name": "monitor-video-streams-api",
     "version": "1.0.0",
     "description": "This service checks how many video streams a given user is watching and caps the number of concurrently viewable video streams to 3.",
-    "main": "index.js",
+    "main": "src/server.js",
     "engines": {
         "node": ">=10 <11"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "start:dev": "nodemon",
         "eslint:rules:check": "run() { eslint --print-config \"${1:-.eslintrc.js}\" | eslint-config-prettier-check; }; run"
     },
     "repository": {
@@ -26,6 +27,10 @@
         "eslint-config-prettier": "^6.4.0",
         "eslint-plugin-import": "^2.18.2",
         "eslint-plugin-prettier": "^3.1.1",
+        "nodemon": "^1.19.3",
         "prettier": "1.18.2"
+    },
+    "dependencies": {
+        "express": "^4.17.1"
     }
 }
