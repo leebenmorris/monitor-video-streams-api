@@ -1,5 +1,8 @@
 {
     "editor.formatOnSave": true,
     "eslint.autoFixOnSave": true,
-    "prettier.requireConfig": true
+    "prettier.requireConfig": true,
+    "cSpell.ignoreWords": [
+        "enablejsapi"
+    ]
 }
