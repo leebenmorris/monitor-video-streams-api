@@ -34,7 +34,9 @@ function onPlayerStateChange(event) {
 // eslint-disable-next-line no-unused-vars
 function onYouTubeIframeAPIReady() {
     document.querySelectorAll('iframe').forEach((element, i) => {
-        // modify iframe elements to make them compatible with the YouTube IFrame Player API
+        // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
+        // this allows new iFrame elements taken directly from the YouTube website to be dumped
+        // into the html file with no further work required.
         const id = `video_${i}`;
         const src = element.getAttribute('src');
 
