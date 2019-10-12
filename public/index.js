@@ -1,14 +1,38 @@
-/* global document, YT */
+/* global document, YT, WebSocket */
 
 const players = {};
 
-const eventsMap = {
+const mapEventNumToName = {
     '-1': 'notStarted',
     '0': 'ended',
     '1': 'playing',
     '2': 'paused',
     '3': 'buffering',
     '5': 'cued',
+};
+
+const socket = new WebSocket('ws://localhost:8000');
+
+socket.onerror = (error) => {
+    console.log(`WebSocket Error: ${error}`);
+};
+
+socket.onopen = (event) => {
+    console.log('Connected to:', event.target.url);
+};
+
+socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+
+    Object.entries(message).forEach(([key, command]) => {
+        players[key][command]();
+    });
+    // if (event.data) console.log('Message received:', event.data);
+};
+
+// Show a disconnected message when the WebSocket is closed.
+socket.onclose = (event) => {
+    console.log('Disconnected from WebSocket.');
 };
 
 // load the YouTube IFrame Player API code asynchronously
@@ -19,17 +43,25 @@ tag.src = 'https://www.youtube.com/iframe_api';
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 function onPlayerReady(event) {
-    console.log('onPlayerReady', {
-        [event.target.a.id]: eventsMap[event.data],
-        players,
-    });
+    const message = {
+        [event.target.a.id]: {
+            ready: Date.now(),
+        },
+    };
+
+    console.log('onPlayerReady', message);
+    socket.send(JSON.stringify(message));
 }
 
 function onPlayerStateChange(event) {
-    console.log('onPlayerStateChange', {
-        [event.target.a.id]: eventsMap[event.data],
-        eventTime: Date.now(),
-    });
+    const message = {
+        [event.target.a.id]: {
+            [mapEventNumToName[event.data]]: Date.now(),
+        },
+    };
+
+    console.log('onPlayerStateChange', message);
+    socket.send(JSON.stringify(message));
 }
 
 // eslint-disable-next-line no-unused-vars
