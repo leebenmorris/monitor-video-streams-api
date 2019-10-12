@@ -1,0 +1,31 @@
+{
+    "name": "monitor-video-streams-api",
+    "version": "1.0.0",
+    "description": "This service checks how many video streams a given user is watching and caps the number of concurrently viewable video streams to 3.",
+    "main": "index.js",
+    "engines": {
+        "node": ">=10 <11"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "eslint:rules:check": "run() { eslint --print-config \"${1:-.eslintrc.js}\" | eslint-config-prettier-check; }; run"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/leebenmorris/monitor-video-streams-api.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/leebenmorris/monitor-video-streams-api/issues"
+    },
+    "homepage": "https://github.com/leebenmorris/monitor-video-streams-api#readme",
+    "devDependencies": {
+        "eslint": "^6.5.1",
+        "eslint-config-airbnb-base": "^14.0.0",
+        "eslint-config-prettier": "^6.4.0",
+        "eslint-plugin-import": "^2.18.2",
+        "eslint-plugin-prettier": "^3.1.1",
+        "prettier": "1.18.2"
+    }
+}
