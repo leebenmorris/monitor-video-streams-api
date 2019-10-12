@@ -1,5 +1,7 @@
 /* global document, YT */
 
+const players = {};
+
 const eventsMap = {
     '-1': 'notStarted',
     '0': 'ended',
@@ -19,9 +21,8 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 function onPlayerReady(event) {
     console.log('onPlayerReady', {
         [event.target.a.id]: eventsMap[event.data],
-        eventTarget: event.target,
+        players,
     });
-    event.target.playVideo();
 }
 
 function onPlayerStateChange(event) {
@@ -37,14 +38,14 @@ function onYouTubeIframeAPIReady() {
         // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
         // this allows new iFrame elements taken directly from the YouTube website to be dumped
         // into the html file with no further work required.
-        const id = `video_${i}`;
+        const id = `player_${i}`;
         const src = element.getAttribute('src');
 
         element.setAttribute('id', id);
         element.setAttribute('src', `${src}?enablejsapi=1`);
 
-        // eslint-disable-next-line no-new
-        new YT.Player(id, {
+        // save all players to a global players object for access outside of event handlers
+        players[id] = new YT.Player(id, {
             events: {
                 onReady: onPlayerReady,
                 onStateChange: onPlayerStateChange,
