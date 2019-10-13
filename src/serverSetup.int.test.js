@@ -1,4 +1,4 @@
-/* eslint-disable func-names */
+/* eslint-disable func-names, no-console */
 
 const chai = require('chai');
 const io = require('socket.io-client');
@@ -12,7 +12,7 @@ const PORT = 1234;
 describe('server', function() {
     let server;
     let socket;
-    // let consoleLog;
+    let consoleLog;
 
     beforeEach(function(done) {
         // suppress console.log messages elsewhere in the code
@@ -46,8 +46,6 @@ describe('server', function() {
             .on('playerControl', (message) => {
                 const expectedMessage = expectedMessages[messageCount];
                 messageCount += 1;
-
-                console.log({ messageInTest: message });
 
                 try {
                     message.should.deep.equal(expectedMessage);
