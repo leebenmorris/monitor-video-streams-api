@@ -45,4 +45,9 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(8000);
+server.on('listening', () => {
+    const { port } = server.address();
+    console.log('Server listening on port', port);
+});
+
+module.exports = server;
