@@ -7,40 +7,29 @@ const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
 
-const maxPlaying = 3;
-
-const events = {};
+const maxPlayersAllowed = 3;
 
 const nowPlaying = new Set();
 
 app.use(express.static(`${__dirname}/../public`));
 
 io.on('connection', (socket) => {
-    socket.on('message', (message) => {
-        Object.entries(message).forEach(([key, value]) => {
-            // eslint-disable-next-line no-unused-expressions
-            events[key] ? Object.assign(events[key], value) : (events[key] = value);
+    socket.on('playerStatus', ([player, status]) => {
+        console.log({ player, status, nowPlayingBefore: [...nowPlaying] });
 
-            const playerState = Object.keys(value)[0];
+        if (status === 'playing') {
+            nowPlaying.add(player);
+        } else {
+            nowPlaying.delete(player);
+        }
+        console.log({ nowPlayingAfter: [...nowPlaying] });
 
-            if (playerState === 'playing') {
-                nowPlaying.add(key);
-            } else {
-                nowPlaying.delete(key);
-            }
-        });
+        const indexOfPlayerToPause = nowPlaying.size - 1 - maxPlayersAllowed;
+        const playerToPause = [...nowPlaying][indexOfPlayerToPause];
 
-        console.log({
-            events,
-            nowPlaying: [...nowPlaying],
-            nowPlayingFirst: [...nowPlaying][0],
-        });
-
-        if (nowPlaying.size > maxPlaying) {
-            const sendMessage = {
-                [[...nowPlaying][0]]: 'pauseVideo',
-            };
-            socket.emit('message', sendMessage);
+        if (playerToPause) {
+            console.log(playerToPause, 'now pausing');
+            socket.emit('playerControl', [playerToPause, 'pauseVideo']);
         }
     });
 });
