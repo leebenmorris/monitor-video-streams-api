@@ -1,7 +1,10 @@
-/* global document, YT, WebSocket */
+/* global document, YT, io */
+
+const socket = io('http://localhost:8000');
 
 const players = {};
-let isSocketConnected = false;
+
+const disconnectedPlayerStates = {};
 
 const mapEventNumToName = {
     '-1': 'notStarted',
@@ -12,43 +15,37 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
-const socket = new WebSocket('ws://localhost:8000');
+socket.on('error', (error) => {
+    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+});
 
-function heartbeat() {
-    clearTimeout(this.pingTimeout);
+socket.on('connect_error', (error) => {
+    console.log(`socket.io Connection Error: ${JSON.stringify(error, null, 4)}`);
+});
 
-    // Use `WebSocket#terminate()`, which immediately destroys the connection,
-    // instead of `WebSocket#close()`, which waits for the close timer.
-    // Delay should be equal to the interval at which your server
-    // sends out pings plus a conservative assumption of the latency.
-    this.pingTimeout = setTimeout(() => this.terminate(), 1000 + 1000);
-}
+socket.on('connect', () => {
+    Object.entries(disconnectedPlayerStates).forEach(([id, state]) => {
+        if (state === 'playing') {
+            players[id].playVideo();
+        }
+    });
+    console.log('Connected to:', socket.id);
+});
 
-socket.onerror = function handleError(error) {
-    console.log(`WebSocket Error: ${error}`);
-};
-
-socket.onopen = function handleOpen(event) {
-    heartbeat();
-    isSocketConnected = true;
-    console.log('Connected to:', event.target.url);
-};
-
-socket.onmessage = function handleMessage(event) {
-    const message = JSON.parse(event.data);
-
+socket.on('message', (message) => {
     Object.entries(message).forEach(([key, command]) => {
         players[key][command]();
     });
-    // if (event.data) console.log('Message received:', event.data);
-};
+    console.log('message received:', message);
+});
 
-// Show a disconnected message when the WebSocket is closed.
-socket.onclose = function handleClose(event) {
-    clearTimeout(this.pingTimeout);
-    isSocketConnected = false;
-    console.log('Disconnected from WebSocket.');
-};
+socket.on('disconnect', () => {
+    Object.entries(players).forEach(([id, player]) => {
+        disconnectedPlayerStates[id] = mapEventNumToName[player.getPlayerState()];
+        player.pauseVideo();
+    });
+    console.log(`Disconnected from: ${socket.id}`);
+});
 
 // load the YouTube IFrame Player API code asynchronously
 const tag = document.createElement('script');
@@ -65,13 +62,14 @@ function onPlayerReady(event) {
     };
 
     console.log('onPlayerReady', message);
-    socket.send(JSON.stringify(message));
+    socket.emit('message', message);
 }
 
 function onPlayerStateChange(event) {
-    if (!isSocketConnected) {
-        event.target.stopPlayer();
+    if (socket.disconnected) {
+        event.target.pauseVideo();
     }
+
     const message = {
         [event.target.a.id]: {
             [mapEventNumToName[event.data]]: Date.now(),
@@ -79,7 +77,7 @@ function onPlayerStateChange(event) {
     };
 
     console.log('onPlayerStateChange', message);
-    socket.send(JSON.stringify(message));
+    socket.emit('message', message);
 }
 
 // eslint-disable-next-line no-unused-vars
