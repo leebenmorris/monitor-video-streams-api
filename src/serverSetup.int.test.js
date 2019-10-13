@@ -36,7 +36,7 @@ describe('server', function() {
         };
 
         socket
-            .once('message', (message) => {
+            .once('playerControl', (message) => {
                 try {
                     message.should.deep.equal(expectedControlMessage);
                     done();
@@ -44,9 +44,9 @@ describe('server', function() {
                     done(err);
                 }
             })
-            .emit('message', { player1: { playing: Date.now() } })
-            .emit('message', { player2: { playing: Date.now() } })
-            .emit('message', { player3: { playing: Date.now() } })
-            .emit('message', { player4: { playing: Date.now() } });
+            .emit('playerStatus', { player1: 'playing' })
+            .emit('playerStatus', { player2: 'playing' })
+            .emit('playerStatus', { player3: 'playing' })
+            .emit('playerStatus', { player4: 'playing' });
     });
 });
