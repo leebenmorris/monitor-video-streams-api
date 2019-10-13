@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const socket = io('http://localhost:7080');
+const ioServerUrl = 'http://localhost:7080';
 
 const players = {};
 
@@ -16,38 +16,6 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
-socket.on('error', (error) => {
-    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
-});
-
-socket.on('connect_error', (error) => {
-    console.log(`socket.io Connection Error: ${JSON.stringify(error, null, 4)}`);
-});
-
-socket.on('connect', () => {
-    Object.entries(disconnectedPlayerStates).forEach(([id, state]) => {
-        if (state === 'playing') {
-            players[id].playVideo();
-        }
-    });
-    console.log('Connected to:', socket.id);
-});
-
-socket.on('message', (message) => {
-    Object.entries(message).forEach(([key, command]) => {
-        players[key][command]();
-    });
-    console.log('message received:', message);
-});
-
-socket.on('disconnect', () => {
-    Object.entries(players).forEach(([id, player]) => {
-        disconnectedPlayerStates[id] = mapEventNumToName[player.getPlayerState()];
-        player.pauseVideo();
-    });
-    console.log(`Disconnected from: ${socket.id}`);
-});
-
 // load the YouTube IFrame Player API code asynchronously
 const tag = document.createElement('script');
 const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -55,15 +23,39 @@ const firstScriptTag = document.getElementsByTagName('script')[0];
 tag.src = 'https://www.youtube.com/iframe_api';
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+// setup the socket.io connection and attach event listeners
+const socket = io(ioServerUrl)
+    .on('error', (error) => {
+        console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+    })
+    .on('connect_error', (error) => {
+        console.log(`socket.io Connection Error: ${JSON.stringify(error, null, 4)}`);
+    })
+    .on('connect', () => {
+        Object.entries(disconnectedPlayerStates).forEach(([id, state]) => {
+            if (state === 'playing') {
+                players[id].playVideo();
+            }
+        });
+        console.log('Connected to:', socket.id);
+    })
+    .on('playerControl', ([key, command]) => {
+        players[key][command]();
+        console.log('playerControl received:', [key, command]);
+    })
+    .on('disconnect', () => {
+        Object.entries(players).forEach(([id, player]) => {
+            disconnectedPlayerStates[id] = mapEventNumToName[player.getPlayerState()];
+            player.pauseVideo();
+        });
+        console.log(`Disconnected from socket.io server, so all videos paused`);
+    });
+
 function onPlayerReady(event) {
-    const message = {
-        [event.target.a.id]: {
-            ready: Date.now(),
-        },
-    };
+    const message = [event.target.a.id, 'ready'];
 
     console.log('onPlayerReady', message);
-    socket.emit('message', message);
+    socket.emit('playerStatus', message);
 }
 
 function onPlayerStateChange(event) {
@@ -71,14 +63,10 @@ function onPlayerStateChange(event) {
         event.target.pauseVideo();
     }
 
-    const message = {
-        [event.target.a.id]: {
-            [mapEventNumToName[event.data]]: Date.now(),
-        },
-    };
+    const message = [event.target.a.id, mapEventNumToName[event.data]];
 
     console.log('onPlayerStateChange', message);
-    socket.emit('message', message);
+    socket.emit('playerStatus', message);
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -91,7 +79,7 @@ function onYouTubeIframeAPIReady() {
         const src = element.getAttribute('src');
 
         element.setAttribute('id', id);
-        element.setAttribute('src', `${src}?enablejsapi=1`);
+        element.setAttribute('src', `${src}?enablejsapi=1&origin=http://localhost:7080`);
 
         // save all players to a global players object for access outside of event handlers
         players[id] = new YT.Player(id, {
