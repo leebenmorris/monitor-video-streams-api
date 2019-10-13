@@ -1,6 +1,7 @@
 /* global document, YT, WebSocket */
 
 const players = {};
+let isSocketConnected = false;
 
 const mapEventNumToName = {
     '-1': 'notStarted',
@@ -13,15 +14,27 @@ const mapEventNumToName = {
 
 const socket = new WebSocket('ws://localhost:8000');
 
-socket.onerror = (error) => {
+function heartbeat() {
+    clearTimeout(this.pingTimeout);
+
+    // Use `WebSocket#terminate()`, which immediately destroys the connection,
+    // instead of `WebSocket#close()`, which waits for the close timer.
+    // Delay should be equal to the interval at which your server
+    // sends out pings plus a conservative assumption of the latency.
+    this.pingTimeout = setTimeout(() => this.terminate(), 1000 + 1000);
+}
+
+socket.onerror = function handleError(error) {
     console.log(`WebSocket Error: ${error}`);
 };
 
-socket.onopen = (event) => {
+socket.onopen = function handleOpen(event) {
+    heartbeat();
+    isSocketConnected = true;
     console.log('Connected to:', event.target.url);
 };
 
-socket.onmessage = (event) => {
+socket.onmessage = function handleMessage(event) {
     const message = JSON.parse(event.data);
 
     Object.entries(message).forEach(([key, command]) => {
@@ -31,7 +44,9 @@ socket.onmessage = (event) => {
 };
 
 // Show a disconnected message when the WebSocket is closed.
-socket.onclose = (event) => {
+socket.onclose = function handleClose(event) {
+    clearTimeout(this.pingTimeout);
+    isSocketConnected = false;
     console.log('Disconnected from WebSocket.');
 };
 
@@ -54,6 +69,9 @@ function onPlayerReady(event) {
 }
 
 function onPlayerStateChange(event) {
+    if (!isSocketConnected) {
+        event.target.stopPlayer();
+    }
     const message = {
         [event.target.a.id]: {
             [mapEventNumToName[event.data]]: Date.now(),
