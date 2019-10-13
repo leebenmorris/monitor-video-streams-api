@@ -2,7 +2,7 @@
     "name": "monitor-video-streams-api",
     "version": "1.0.0",
     "description": "This service checks how many video streams a given user is watching and caps the number of concurrently viewable video streams to 3.",
-    "main": "src/server.js",
+    "main": "src/serverStart.js",
     "engines": {
         "node": ">=10 <11"
     },
