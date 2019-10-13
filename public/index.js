@@ -1,4 +1,5 @@
-/* global document, YT, io */
+/* eslint-disable no-console */
+/* global YT, io */
 
 const socket = io('http://localhost:7080');
 
