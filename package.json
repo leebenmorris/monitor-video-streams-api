@@ -7,7 +7,8 @@
         "node": ">=10 <11"
     },
     "scripts": {
-        "test": "mocha --watch \"src/**/*.test.js\"",
+        "test": "mocha \"src/**/*.test.js\"",
+        "test:watch": "npm run test -- --watch",
         "start:dev": "nodemon",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-src/serverStart.js}\"; }; run",
         "eslint:rules:check": "run() { eslint --print-config \"${1:-src/serverStart.js}\" | eslint-config-prettier-check; }; run"
