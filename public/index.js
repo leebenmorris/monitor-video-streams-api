@@ -16,13 +16,6 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
-// load the YouTube IFrame Player API code asynchronously
-const tag = document.createElement('script');
-const firstScriptTag = document.getElementsByTagName('script')[0];
-
-tag.src = 'https://www.youtube.com/iframe_api';
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
 // setup the socket.io connection and attach event listeners
 const socket = io(ioServerUrl)
     .on('error', (error) => {
@@ -39,13 +32,14 @@ const socket = io(ioServerUrl)
         });
         console.log('Connected to:', socket.id);
     })
-    .on('playerControl', ([key, command]) => {
-        players[key][command]();
-        console.log('playerControl received:', [key, command]);
+    .on('playerControl', ([id, command]) => {
+        players[id][command]();
+        console.log('playerControl received:', [id, command]);
     })
     .on('disconnect', () => {
         Object.entries(players).forEach(([id, player]) => {
-            disconnectedPlayerStates[id] = mapEventNumToName[player.getPlayerState()];
+            const currentPlayerState = mapEventNumToName[player.getPlayerState()];
+            disconnectedPlayerStates[id] = currentPlayerState;
             player.pauseVideo();
         });
         console.log(`Disconnected from socket.io server, so all videos paused`);
