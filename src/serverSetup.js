@@ -14,6 +14,8 @@ const nowPlaying = new Set();
 app.use(express.static(`${__dirname}/../public`));
 
 io.on('connection', (socket) => {
+    // eslint-disable-next-line no-console
+    console.log(`Socket connected to ${socket.id}`);
     socket.on('playerStatus', ([player, status]) => {
         if (status === 'playing') {
             nowPlaying.add(player);
