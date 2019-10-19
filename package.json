@@ -45,6 +45,6 @@
         "socket.io": "^2.3.0"
     },
     "husky": {
-        "pre-push": "npm run copyPublicToDocs"
+        "pre-push": "cp -R public/ docs/"
     }
 }
