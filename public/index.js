@@ -39,6 +39,7 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
+// load the IFrame Player API code asynchronously
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/iframe_api';
 
@@ -92,7 +93,6 @@ function onPlayerStateChange(event) {
     socket.emit('playerStatus', message);
 }
 
-// eslint-disable-next-line no-unused-vars
 window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
     console.log('onYouTubeIframeAPIReady called');
 
