@@ -1,13 +1,30 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/iframe_api';
-
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
 const ioServerUrl = 'https://monitor-video-streams-api.herokuapp.com';
+
+const videos = [
+    {
+        videoId: 'hY7m5jjJ9mM',
+        height: 158,
+        width: 280,
+    },
+    {
+        videoId: 'F7uSppqT8bM',
+        height: 158,
+        width: 280,
+    },
+    {
+        videoId: 'rNSnfXl1ZjU',
+        height: 158,
+        width: 280,
+    },
+    {
+        videoId: '94PLgLKcGW8',
+        height: 158,
+        width: 280,
+    },
+];
 
 const players = {};
 
@@ -21,6 +38,12 @@ const mapEventNumToName = {
     '3': 'buffering',
     '5': 'cued',
 };
+
+const tag = document.createElement('script');
+tag.src = 'https://www.youtube.com/iframe_api';
+
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 // setup the socket.io connection and attach event listeners
 const socket = io(ioServerUrl)
@@ -73,18 +96,15 @@ function onPlayerStateChange(event) {
 window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
     console.log('onYouTubeIframeAPIReady called');
 
-    document.querySelectorAll('iframe').forEach((element, i) => {
-        // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
-        // this allows new iFrame elements taken directly from the YouTube website to be dumped
-        // into the html file with no further work required.
-        const id = `player_${i}`;
-        const src = element.getAttribute('src');
+    const scriptTagZero = document.getElementsByTagName('script')[0];
 
-        element.setAttribute('id', id);
-        element.setAttribute(
-            'src',
-            `${src}?enablejsapi=1&origin=https://monitor-video-streams-api.herokuapp.com`,
-        );
+    videos.forEach((video, i) => {
+        const id = `player_${i + 1}`;
+
+        const div = document.createElement('div');
+        div.setAttribute('id', id);
+
+        scriptTagZero.parentNode.insertBefore(div, scriptTagZero);
 
         // save all players to a global players object for access outside of event handlers
         players[id] = new YT.Player(id, {
@@ -92,6 +112,7 @@ window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
                 onReady: onPlayerReady,
                 onStateChange: onPlayerStateChange,
             },
+            ...video,
         });
     });
 };
