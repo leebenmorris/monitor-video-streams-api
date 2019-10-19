@@ -94,6 +94,6 @@ window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
                     onStateChange: onPlayerStateChange,
                 },
             });
-        }, i * 200);
+        }, i * 500);
     });
 };
