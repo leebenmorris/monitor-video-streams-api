@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const ioServerUrl = 'http://localhost:7080';
+const ioServerUrl = 'monitor-video-streams-api.herokuapp.com';
 
 const players = {};
 
