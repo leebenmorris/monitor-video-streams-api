@@ -17,7 +17,7 @@ const mapEventNumToName = {
 };
 
 // eslint-disable-next-line no-unused-vars
-function onYouTubeIframeAPIReady() {
+window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
     console.log('onYouTubeIframeAPIReady called');
 
     // setup the socket.io connection and attach event listeners
@@ -88,4 +88,4 @@ function onYouTubeIframeAPIReady() {
             },
         });
     });
-}
+};
