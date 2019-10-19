@@ -73,27 +73,25 @@ function onPlayerStateChange(event) {
 window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
     console.log('onYouTubeIframeAPIReady called');
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('iframe').forEach((element, i) => {
-            // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
-            // this allows new iFrame elements taken directly from the YouTube website to be dumped
-            // into the html file with no further work required.
-            const id = `player_${i}`;
-            const src = element.getAttribute('src');
+    document.querySelectorAll('iframe').forEach((element, i) => {
+        // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
+        // this allows new iFrame elements taken directly from the YouTube website to be dumped
+        // into the html file with no further work required.
+        const id = `player_${i}`;
+        const src = element.getAttribute('src');
 
-            element.setAttribute('id', id);
-            element.setAttribute(
-                'src',
-                `${src}?enablejsapi=1&origin=https://monitor-video-streams-api.herokuapp.com`,
-            );
+        element.setAttribute('id', id);
+        element.setAttribute(
+            'src',
+            `${src}?enablejsapi=1&origin=https://monitor-video-streams-api.herokuapp.com`,
+        );
 
-            // save all players to a global players object for access outside of event handlers
-            players[id] = new YT.Player(id, {
-                events: {
-                    onReady: onPlayerReady,
-                    onStateChange: onPlayerStateChange,
-                },
-            });
+        // save all players to a global players object for access outside of event handlers
+        players[id] = new YT.Player(id, {
+            events: {
+                onReady: onPlayerReady,
+                onStateChange: onPlayerStateChange,
+            },
         });
     });
 };
