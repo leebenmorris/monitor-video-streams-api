@@ -8,6 +8,7 @@
     },
     "scripts": {
         "test": "mocha \"src/**/*.test.js\"",
+        "start": "node src/serverStart.js",
         "test:watch": "npm run test -- --watch",
         "start:dev": "nodemon",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-src/serverStart.js}\"; }; run",
