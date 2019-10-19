@@ -73,8 +73,8 @@ function onPlayerStateChange(event) {
 window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
     console.log('onYouTubeIframeAPIReady called');
 
-    function configurePlayers() {
-        document.querySelectorAll('iframe').forEach((element, i) => {
+    document.querySelectorAll('iframe').forEach((element, i) => {
+        setTimeout(() => {
             // modify iFrame elements to make them compatible with the YouTube IFrame Player API.
             // this allows new iFrame elements taken directly from the YouTube website to be dumped
             // into the html file with no further work required.
@@ -94,11 +94,6 @@ window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
                     onStateChange: onPlayerStateChange,
                 },
             });
-        });
-        if (Object.keys(players).length !== 4) {
-            configurePlayers();
-        }
-    }
-
-    configurePlayers();
+        }, i * 200);
+    });
 };
