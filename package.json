@@ -46,7 +46,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-push": "cp -R public/ docs/"
+            "pre-push": "npm run copyPublicToDocs"
         }
     }
 }
