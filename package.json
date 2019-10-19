@@ -9,8 +9,8 @@
     "scripts": {
         "test": "mocha \"src/**/*.test.js\"",
         "start": "node src/serverStart.js",
-        "test:watch": "npm run test -- --watch",
         "start:dev": "nodemon",
+        "test:watch": "npm run test -- --watch",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-src/serverStart.js}\"; }; run",
         "eslint:rules:check": "run() { eslint --print-config \"${1:-src/serverStart.js}\" | eslint-config-prettier-check; }; run"
     },
