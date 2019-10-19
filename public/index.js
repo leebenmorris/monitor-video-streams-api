@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/iframe_api';
+// const tag = document.createElement('script');
+// tag.src = 'https://www.youtube.com/iframe_api';
 
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// const firstScriptTag = document.getElementsByTagName('script')[0];
+// firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 const ioServerUrl = 'https://monitor-video-streams-api.herokuapp.com';
 
