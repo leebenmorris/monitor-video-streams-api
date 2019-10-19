@@ -75,7 +75,10 @@ function onYouTubeIframeAPIReady() {
         const src = element.getAttribute('src');
 
         element.setAttribute('id', id);
-        element.setAttribute('src', `${src}?enablejsapi=1&origin=http://localhost:7080`);
+        element.setAttribute(
+            'src',
+            `${src}?enablejsapi=1&origin=https://monitor-video-streams-api.herokuapp.com`,
+        );
 
         // save all players to a global players object for access outside of event handlers
         players[id] = new YT.Player(id, {
