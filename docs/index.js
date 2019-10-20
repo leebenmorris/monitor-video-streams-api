@@ -1,30 +1,12 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const ioServerUrl = 'https://monitor-video-streams-api.herokuapp.com';
+// const ioServerUrl = 'https://monitor-video-streams-api.herokuapp.com';
+const ioServerUrl = 'http://localhost:7080';
 
-const videos = [
-    {
-        videoId: 'hY7m5jjJ9mM',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: 'F7uSppqT8bM',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: 'rNSnfXl1ZjU',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: '94PLgLKcGW8',
-        height: 158,
-        width: 280,
-    },
-];
+console.log({ ioServerUrl });
+
+let socket = {};
 
 const players = {};
 
@@ -39,80 +21,109 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
-// load the IFrame Player API code asynchronously
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/iframe_api';
+function getFirstScriptTag() {
+    return document.getElementsByTagName('script')[0];
+}
 
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+function ioErrorHandler(error) {
+    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+}
 
-// setup the socket.io connection and attach event listeners
-const socket = io(ioServerUrl)
-    .on('error', (error) => {
-        console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
-    })
-    .on('connect_error', (error) => {
-        console.log(`socket.io Connection Error: ${JSON.stringify(error, null, 4)}`);
-    })
-    .on('connect', () => {
-        Object.entries(disconnectedPlayerStates).forEach(([id, state]) => {
-            if (state === 'playing') {
-                players[id].playVideo();
-            }
-        });
-        console.log('Connected to:', socket.id);
-    })
-    .on('playerControl', ([id, command]) => {
-        players[id][command]();
-        console.log('playerControl received:', [id, command]);
-    })
-    .on('disconnect', () => {
-        Object.entries(players).forEach(([id, player]) => {
-            const currentPlayerState = mapEventNumToName[player.getPlayerState()];
-            disconnectedPlayerStates[id] = currentPlayerState;
-            player.pauseVideo();
-        });
-        console.log(`Disconnected from socket.io server, so all videos paused`);
+function ioConnectErrorHandler(error) {
+    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+}
+
+function ioConnectHandler() {
+    Object.entries(disconnectedPlayerStates).forEach(([id, state]) => {
+        if (state === 'playing') {
+            players[id].playVideo();
+        }
     });
+    console.log('Connected to:', socket.id);
+}
 
-function onPlayerReady(event) {
+function ioPlayerControlHandler([id, command]) {
+    players[id][command]();
+    console.log('playerControl received:', [id, command]);
+}
+
+function ioDisconnectHandler() {
+    Object.entries(players).forEach(([id, player]) => {
+        const currentPlayerState = mapEventNumToName[player.getPlayerState()];
+        disconnectedPlayerStates[id] = currentPlayerState;
+        player.pauseVideo();
+    });
+    console.log(`Disconnected from socket.io server, so all videos paused`);
+}
+
+function onPlayerReadyHandler(ioSocket, event) {
     const message = [event.target.a.id, 'ready'];
 
     console.log('onPlayerReady', message);
-    socket.emit('playerStatus', message);
+    ioSocket.emit('playerStatus', message);
 }
 
-function onPlayerStateChange(event) {
-    if (socket.disconnected) {
+function onPlayerStateChangeHandler(ioSocket, event) {
+    if (ioSocket.disconnected) {
         event.target.pauseVideo();
     }
 
     const message = [event.target.a.id, mapEventNumToName[event.data]];
 
     console.log('onPlayerStateChange', message);
-    socket.emit('playerStatus', message);
+    ioSocket.emit('playerStatus', message);
 }
 
-window.onYouTubeIframeAPIReady = function onYouTubeIframeAPIReady() {
+// setup the socket.io connection and attach event listeners
+setTimeout(() => {
+    socket = io(ioServerUrl)
+        .on('error', ioErrorHandler)
+        .on('connect_error', ioConnectErrorHandler)
+        .on('connect', ioConnectHandler)
+        .on('playerControl', ioPlayerControlHandler)
+        .on('disconnect', ioDisconnectHandler);
+}, 10000);
+
+// load the iFrame Player API code asynchronously
+const tag = document.createElement('script');
+tag.src = 'https://www.youtube.com/iframe_api';
+
+const firstScriptTag = getFirstScriptTag();
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// this gets called by the YouTube iFrame API once it has loaded
+window.onYouTubeIframeAPIReady = () => {
     console.log('onYouTubeIframeAPIReady called');
 
-    const scriptTagZero = document.getElementsByTagName('script')[0];
+    const scriptTagZero = getFirstScriptTag();
 
-    videos.forEach((video, i) => {
-        const id = `player_${i + 1}`;
+    (function onlyIfSocketConnected() {
+        if (socket.connected) {
+            socket.emit('getVideoList', (videoList) => {
+                console.log({ videoList });
+                videoList.forEach((video, i) => {
+                    const id = `player_${i + 1}`;
 
-        const div = document.createElement('div');
-        div.setAttribute('id', id);
+                    const div = document.createElement('div');
+                    div.setAttribute('id', id);
 
-        scriptTagZero.parentNode.insertBefore(div, scriptTagZero);
+                    scriptTagZero.parentNode.insertBefore(div, scriptTagZero);
 
-        // save all players to a global players object for access outside of event handlers
-        players[id] = new YT.Player(id, {
-            events: {
-                onReady: onPlayerReady,
-                onStateChange: onPlayerStateChange,
-            },
-            ...video,
-        });
-    });
+                    // save all players to a global players object for access outside of event handlers
+                    players[id] = new YT.Player(id, {
+                        events: {
+                            onReady: onPlayerReadyHandler.bind(null, socket),
+                            onStateChange: onPlayerStateChangeHandler.bind(null, socket),
+                        },
+                        ...video,
+                    });
+                });
+            });
+        } else {
+            setTimeout(() => {
+                console.log('onlyIfSocketConnected setTimeout called');
+                onlyIfSocketConnected();
+            }, 200);
+        }
+    })();
 };
