@@ -35,7 +35,7 @@ const videoList = [
 ];
 
 // frontend served from /docs directory to suit github pages
-app.use(express.static(`${__dirname}/../docs`));
+// app.use(express.static(`${__dirname}/../../docs`));
 
 io.on('connection', (socket) => {
     // eslint-disable-next-line no-console
