@@ -1,5 +1,5 @@
 {
-    "watch": ["src", "public"],
-    "exec": "node src/serverStart.js",
+    "watch": ["src/backend"],
+    "exec": "node src/backend/serverStart.js",
     "ext": "js,json,html,css"
 }
