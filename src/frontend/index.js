@@ -70,8 +70,10 @@ function onPlayerReadyHandler(ioSocket, event) {
 }
 
 function onPlayerStateChangeHandler(ioSocket, event) {
+    const infoMessage = mapEventNumToName[event.target.getPlayerState()];
+
     document.getElementById(infoId(event.target.a.id)).textContent =
-        mapEventNumToName[event.target.getPlayerState()];
+        infoMessage === 'paused' ? 'PAUSED' : infoMessage;
 
     if (ioSocket.disconnected) {
         event.target.pauseVideo();
