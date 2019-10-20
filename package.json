@@ -61,7 +61,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-push": "npm run build && git add docs && git commit -m 'new build' && git push"
+            "pre-push": "npm run build && git add docs && git commit -m 'new build'"
         }
     }
 }
