@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const ioServerUrl = process.env.SOCKET_URL;
+const ioServerUrl = 'hello';
 
 console.log({ ioServerUrl });
 
