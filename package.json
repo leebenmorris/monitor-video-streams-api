@@ -61,7 +61,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-push": "npm run build && [ -z \"$(git diff --exit-code)\" ] && return 1 || return 0"
+            "pre-push": "run() { npm run build && [ -z \"$(git diff --exit-code)\" ] && return 1 || return 0; }; run"
         }
     }
 }
