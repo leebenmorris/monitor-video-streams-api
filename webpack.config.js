@@ -1,4 +1,6 @@
 const path = require('path');
+
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -19,10 +21,13 @@ module.exports = {
             },
         ],
     },
-    mode: 'development',
+    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/frontend/index.html',
+        }),
+        new webpack.EnvironmentPlugin({
+            SOCKET_URL: 'http://localhost:7080',
         }),
     ],
     devServer: {
