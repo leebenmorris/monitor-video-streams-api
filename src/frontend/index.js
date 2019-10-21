@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-// const ioServerUrl = 'https://monitor-video-streams-api.herokuapp.com';
-const ioServerUrl = 'http://localhost:7080';
+const ioServerUrl = process.env.SOCKET_URL;
 
 console.log({ ioServerUrl });
 
