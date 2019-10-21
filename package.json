@@ -10,7 +10,7 @@
         "test": "mocha \"src/**/*.test.js\"",
         "start": "node src/backend/serverStart.js",
         "start:dev": "concurrently webpack-dev-server nodemon",
-        "build": "webpack -p",
+        "build": "NODE_ENV=production SOCKET_URL=https://monitor-video-streams-api.herokuapp.com webpack",
         "build:dev": "webpack",
         "test:watch": "npm run test -- --watch",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-src/serverStart.js}\"; }; run",
