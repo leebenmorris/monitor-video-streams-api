@@ -9,7 +9,7 @@ const io = socketIO(server);
 
 const maxPlaying = 3;
 
-const nowPlaying = new Set();
+const nowPlaying = {};
 
 const videoList = [
     {
@@ -41,6 +41,10 @@ io.on('connection', (socket) => {
     // eslint-disable-next-line no-console
     console.log(`Socket connected to ${socket.id}`);
 
+    if (!nowPlaying[socket.id]) {
+        nowPlaying[socket.id] = new Set();
+    }
+
     socket.on('getVideoList', (cb) => {
         console.log('getVideoList called');
         cb(videoList);
@@ -48,16 +52,20 @@ io.on('connection', (socket) => {
 
     socket.on('playerStatus', ([player, status]) => {
         if (status === 'playing') {
-            nowPlaying.add(player);
+            nowPlaying[socket.id].add(player);
         } else {
-            nowPlaying.delete(player);
+            nowPlaying[socket.id].delete(player);
         }
 
-        if (nowPlaying.size > maxPlaying) {
-            const indexOfPlayerToPause = nowPlaying.size - 1 - maxPlaying;
-            const playerToPause = [...nowPlaying][indexOfPlayerToPause];
+        if (nowPlaying[socket.id].size > maxPlaying) {
+            const indexOfPlayerToPause = nowPlaying[socket.id].size - 1 - maxPlaying;
+            const playerToPause = [...nowPlaying[socket.id]][indexOfPlayerToPause];
             socket.emit('playerControl', [playerToPause, 'pauseVideo']);
         }
+    });
+
+    socket.on('disconnect', () => {
+        delete nowPlaying[socket.id];
     });
 });
 
