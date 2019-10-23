@@ -11,11 +11,10 @@ const PORT = 1234;
 
 describe('server', function() {
     let server;
-    let socketOne;
-    let socketTwo;
+    let sockets = [];
     let consoleLog;
 
-    const successesToGather = (num, done) => {
+    function successesToGather(num, done) {
         let numberOfSuccesses = 0;
 
         return () => {
@@ -24,34 +23,46 @@ describe('server', function() {
                 done();
             }
         };
-    };
+    }
+
+    function createSockets(num, done) {
+        const gatherSuccesses = successesToGather(num, done);
+
+        return Array(num)
+            .fill(null)
+            .map(() =>
+                io(`http://localhost:${PORT}`)
+                    .on('error', done)
+                    .on('connect_error', done)
+                    .on('connect', gatherSuccesses),
+            );
+    }
 
     beforeEach(function(done) {
-        const gatherSuccesses = successesToGather(2, done);
-
         // suppress console.log messages elsewhere in the code
-        consoleLog = console.log;
-        console.log = () => {};
+        // consoleLog = console.log;
+        // console.log = () => {};
 
         server = serverSetup.listen(PORT);
 
-        socketOne = io(`http://localhost:${PORT}`)
-            .on('connect_error', done)
-            .on('connect', gatherSuccesses);
-
-        socketTwo = io(`http://localhost:${PORT}`)
-            .on('connect_error', done)
-            .on('connect', gatherSuccesses);
+        done();
     });
 
     afterEach(function(done) {
         // restore console.log
-        console.log = consoleLog;
+        // console.log = consoleLog;
 
-        socketOne.close();
-        socketTwo.close();
+        const gatherSuccesses = successesToGather(sockets.length + 1, done);
+
+        server.on('close', gatherSuccesses);
         server.close();
-        done();
+
+        sockets.forEach((socket) => {
+            socket.on('disconnect', gatherSuccesses);
+            socket.close();
+        });
+
+        // gatherSuccesses();
     });
 
     it('serverSetup should be an object', function() {
@@ -59,10 +70,12 @@ describe('server', function() {
     });
 
     it('should respond with a control message if more than three status messages are sent for a single connection', function(done) {
+        sockets = createSockets(1, done);
+
         let messageCount = 0;
         const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
-        socketOne
+        sockets[0]
             .on('playerControl', (message) => {
                 const expectedMessage = expectedMessages[messageCount];
                 messageCount += 1;
@@ -84,50 +97,34 @@ describe('server', function() {
     });
 
     it('should respond with a control message if more than three status messages are sent for a each connection', function(done) {
-        let socketOneMessageCount = 0;
-        let socketTwoMessageCount = 0;
+        sockets = createSockets(10, done);
+
+        const socketMessageCounts = Array(sockets.length).fill(0);
+
         const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
-        const gatherSuccesses = successesToGather(2, done);
+        const gatherSuccesses = successesToGather(sockets.length, done);
 
-        socketOne
-            .on('playerControl', (message) => {
-                const expectedMessage = expectedMessages[socketOneMessageCount];
-                socketOneMessageCount += 1;
+        sockets.forEach((socket, i) => {
+            socket
+                .on('playerControl', (message) => {
+                    const expectedMessage = expectedMessages[socketMessageCounts[i]];
+                    socketMessageCounts[i] += 1;
 
-                try {
-                    message.should.deep.equal(expectedMessage);
-                    if (socketOneMessageCount === expectedMessages.length) {
-                        gatherSuccesses();
+                    try {
+                        message.should.deep.equal(expectedMessage);
+                        if (socketMessageCounts[i] === expectedMessages.length) {
+                            gatherSuccesses();
+                        }
+                    } catch (err) {
+                        done(err);
                     }
-                } catch (err) {
-                    done(err);
-                }
-            })
-            .emit('playerStatus', ['player1', 'playing'])
-            .emit('playerStatus', ['player2', 'playing'])
-            .emit('playerStatus', ['player3', 'playing'])
-            .emit('playerStatus', ['player4', 'playing'])
-            .emit('playerStatus', ['player5', 'playing']);
-
-        socketTwo
-            .on('playerControl', (message) => {
-                const expectedMessage = expectedMessages[socketTwoMessageCount];
-                socketTwoMessageCount += 1;
-
-                try {
-                    message.should.deep.equal(expectedMessage);
-                    if (socketTwoMessageCount === expectedMessages.length) {
-                        gatherSuccesses();
-                    }
-                } catch (err) {
-                    done(err);
-                }
-            })
-            .emit('playerStatus', ['player1', 'playing'])
-            .emit('playerStatus', ['player2', 'playing'])
-            .emit('playerStatus', ['player3', 'playing'])
-            .emit('playerStatus', ['player4', 'playing'])
-            .emit('playerStatus', ['player5', 'playing']);
+                })
+                .emit('playerStatus', ['player1', 'playing'])
+                .emit('playerStatus', ['player2', 'playing'])
+                .emit('playerStatus', ['player3', 'playing'])
+                .emit('playerStatus', ['player4', 'playing'])
+                .emit('playerStatus', ['player5', 'playing']);
+        });
     });
 });
