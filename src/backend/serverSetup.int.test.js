@@ -1,4 +1,4 @@
-/* eslint-disable func-names, no-console */
+/* eslint-disable no-await-in-loop, func-names, no-console */
 const { promisify } = require('util');
 
 const chai = require('chai');
@@ -14,12 +14,12 @@ const asyncSetImmediate = promisify(setImmediate);
 
 async function createSocket() {
     return new Promise((resolve, reject) => {
-        const socket = io(`http://localhost:${PORT}`);
-
-        socket
+        io(`http://localhost:${PORT}`)
             .on('error', reject)
             .on('connect_error', reject)
-            .on('connect', resolve.bind(null, socket));
+            .on('connect', function() {
+                resolve(this);
+            });
     });
 }
 
@@ -27,9 +27,7 @@ async function createSockets(num = 1) {
     const theseSockets = [];
 
     for (let i = 0; i < num; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
         await asyncSetImmediate();
-        // eslint-disable-next-line no-await-in-loop
         theseSockets.push(await createSocket());
     }
 
@@ -39,9 +37,7 @@ async function createSockets(num = 1) {
 async function closeAllSockets(sockets) {
     // eslint-disable-next-line no-restricted-syntax
     for (const socket of sockets) {
-        // eslint-disable-next-line
         await asyncSetImmediate();
-        // eslint-disable-next-line
         await new Promise((resolve) => {
             socket.on('disconnect', resolve);
             socket.close();
@@ -57,7 +53,6 @@ async function createAndTestSockets(numberOfSockets) {
     const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
     for (let i = 0; i < theseSockets.length; i += 1) {
-        // eslint-disable-next-line no-await-in-loop, no-loop-func
         await new Promise((resolve, reject) => {
             theseSockets[i]
                 .on('playerControl', (message) => {
