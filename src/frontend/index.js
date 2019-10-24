@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 /* global YT, io */
 
-const ioServerUrl = process.env.SOCKET_URL;
+require('./index.css');
 
-console.log({ ioServerUrl });
+const ioServerUrl = process.env.SOCKET_URL;
 
 let socket = {};
 
@@ -20,20 +20,24 @@ const mapEventNumToName = {
     '5': 'cued',
 };
 
-const playerId = (index) => `player_${index + 1}`;
+const getPlayerId = (index) => `player_${index + 1}`;
 
-const infoId = (playerIdent) => `${playerIdent}_info`;
+const getInfoId = (playerIdent) => `${playerIdent}_info`;
 
-function getFirstScriptTag() {
-    return document.getElementsByTagName('script')[0];
-}
+const getFirstScriptTag = () => document.getElementsByTagName('script')[0];
+
+// eslint-disable-next-line no-return-assign
+const idSetText = (id, text) => (document.getElementById(id).textContent = text);
+
+const insertElementBefore = (toInsertBefore, element) =>
+    element.parentNode.insertBefore(toInsertBefore, element);
 
 function ioErrorHandler(error) {
-    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+    idSetText('socket-messages', `socket.io Error: ${JSON.stringify(error, null, 4)}`);
 }
 
 function ioConnectErrorHandler(error) {
-    console.log(`socket.io Error: ${JSON.stringify(error, null, 4)}`);
+    idSetText('socket-messages', `socket.io Error: ${JSON.stringify(error, null, 4)}`);
 }
 
 function ioConnectHandler() {
@@ -42,12 +46,13 @@ function ioConnectHandler() {
             players[id].playVideo();
         }
     });
-    console.log('Connected to:', socket.id);
+    idSetText('socket-messages', `Connected to: ${socket.id}`);
 }
 
 function ioPlayerControlHandler([id, command]) {
     players[id][command]();
-    console.log('playerControl received:', [id, command]);
+
+    idSetText('socket-messages', `playerControl received: ${id} ${command}`);
 }
 
 function ioDisconnectHandler() {
@@ -56,32 +61,32 @@ function ioDisconnectHandler() {
         disconnectedPlayerStates[id] = currentPlayerState;
         player.pauseVideo();
     });
-    console.log(`Disconnected from socket.io server, so all videos paused`);
+
+    idSetText('socket-messages', 'Disconnected from socket.io server, so all videos paused');
 }
 
 function onPlayerReadyHandler(ioSocket, event) {
-    document.getElementById(infoId(event.target.a.id)).textContent = 'ready';
+    const playerId = event.target.a.id;
 
-    const message = [event.target.a.id, 'ready'];
+    idSetText(getInfoId(playerId), `${playerId}: ready`);
 
-    console.log('onPlayerReady', message);
-    ioSocket.emit('playerStatus', message);
+    ioSocket.emit('playerStatus', [playerId, 'ready']);
 }
 
 function onPlayerStateChangeHandler(ioSocket, event) {
-    const infoMessage = mapEventNumToName[event.target.getPlayerState()];
+    const playerId = event.target.a.id;
+    const currentPlayerState = mapEventNumToName[event.data];
 
-    document.getElementById(infoId(event.target.a.id)).textContent =
-        infoMessage === 'paused' ? 'PAUSED' : infoMessage;
+    idSetText(
+        getInfoId(playerId),
+        `${playerId}: ${currentPlayerState === 'paused' ? 'PAUSED' : currentPlayerState}`,
+    );
 
     if (ioSocket.disconnected) {
         event.target.pauseVideo();
     }
 
-    const message = [event.target.a.id, mapEventNumToName[event.data]];
-
-    console.log('onPlayerStateChange', message);
-    ioSocket.emit('playerStatus', message);
+    ioSocket.emit('playerStatus', [playerId, currentPlayerState]);
 }
 
 // setup the socket.io connection and attach event listeners
@@ -97,35 +102,36 @@ const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/iframe_api';
 
 const firstScriptTag = getFirstScriptTag();
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+insertElementBefore(tag, firstScriptTag);
 
 // this gets called by the YouTube iFrame API once it has loaded
 window.onYouTubeIframeAPIReady = () => {
-    console.log('onYouTubeIframeAPIReady called');
+    idSetText('player-messages', 'YouTube iFrame API Ready');
 
     const scriptTagZero = getFirstScriptTag();
 
-    (function onlyIfSocketConnected() {
+    (function onlyIfSocketConnected(retryCount = 1) {
         if (socket.connected) {
-            socket.emit('getVideoList', (videoList) => {
-                console.log({ videoList });
-                videoList.forEach((video, i) => {
-                    const playerIdent = playerId(i);
-                    const infoIdent = infoId(playerIdent);
+            // eslint-disable-next-line no-param-reassign
+            retryCount = 1;
 
-                    const wrapperDiv = document.createElement('div');
-                    wrapperDiv.setAttribute('style', 'display: inline-block;');
+            socket.emit('getVideoList', (videoList) => {
+                videoList.forEach((video, i) => {
+                    const playerIdent = getPlayerId(i);
+                    const infoIdent = getInfoId(playerIdent);
+
+                    const playerDiv = document.createElement('div');
+                    playerDiv.setAttribute('id', 'player');
 
                     const p = document.createElement('p');
                     p.setAttribute('id', infoIdent);
-                    p.setAttribute('style', 'text-align: center;');
-                    wrapperDiv.appendChild(p);
+                    playerDiv.appendChild(p);
 
                     const div = document.createElement('div');
                     div.setAttribute('id', playerIdent);
-                    wrapperDiv.appendChild(div);
+                    playerDiv.appendChild(div);
 
-                    scriptTagZero.parentNode.insertBefore(wrapperDiv, scriptTagZero);
+                    insertElementBefore(playerDiv, scriptTagZero);
 
                     // save all players to a global players object for access outside of event handlers
                     players[playerIdent] = new YT.Player(playerIdent, {
@@ -139,8 +145,8 @@ window.onYouTubeIframeAPIReady = () => {
             });
         } else {
             setTimeout(() => {
-                console.log('onlyIfSocketConnected setTimeout called');
-                onlyIfSocketConnected();
+                idSetText('socket-messages', `Socket disconnected: retry attempt ${retryCount}`);
+                onlyIfSocketConnected(retryCount + 1);
             }, 200);
         }
     })();
