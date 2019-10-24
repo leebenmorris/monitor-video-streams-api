@@ -1,0 +1,14 @@
+div[id='player'] {
+    display: inline-block;
+}
+
+p[id$='info'] {
+    font-family: Tahoma, Geneva, sans-serif;
+    text-align: center;
+}
+
+span[id$='messages'] {
+    padding: 0px 20px 0px 20px;
+    font-family: Tahoma, Geneva, sans-serif;
+    text-align: center;
+}
