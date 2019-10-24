@@ -101,7 +101,9 @@ describe('serverSetup', function() {
         serverSetup.should.be.a('object');
     });
 
-    it('should return a list of videos when requested', function(done) {
+    it('should return a list of videos when requested', async function() {
+        sockets = await createSockets(1);
+
         const expectedVideoList = [
             {
                 videoId: 'hY7m5jjJ9mM',
@@ -125,11 +127,10 @@ describe('serverSetup', function() {
             },
         ];
 
-        createSockets(1).then((localSockets) => {
-            sockets = localSockets;
-            localSockets[0].emit('getVideoList', (videoList) => {
+        await new Promise((resolve) => {
+            sockets[0].emit('getVideoList', (videoList) => {
                 videoList.should.deep.equal(expectedVideoList);
-                done();
+                resolve();
             });
         });
     });
