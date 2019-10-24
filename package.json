@@ -48,7 +48,6 @@
         "nodemon": "^1.19.3",
         "open-cli": "^5.0.0",
         "prettier": "1.18.2",
-        "socket.io-client": "^2.3.0",
         "style-loader": "^1.0.0",
         "webpack": "^4.41.2",
         "webpack-cli": "^3.3.9",
@@ -57,7 +56,8 @@
     "dependencies": {
         "cors": "^2.8.5",
         "express": "^4.17.1",
-        "socket.io": "^2.3.0"
+        "socket.io": "^2.3.0",
+        "socket.io-client": "^2.3.0"
     },
     "husky": {
         "hooks": {
