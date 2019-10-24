@@ -22,7 +22,7 @@ const mapEventNumToName = {
 
 const playerId = (index) => `player_${index + 1}`;
 
-const infoId = (playerIdentity) => `${playerIdentity}_info`;
+const infoId = (playerIdent) => `${playerIdent}_info`;
 
 function getFirstScriptTag() {
     return document.getElementsByTagName('script')[0];
@@ -69,11 +69,10 @@ function onPlayerReadyHandler(ioSocket, event) {
 }
 
 function onPlayerStateChangeHandler(ioSocket, event) {
-    const currentPlayerState = event.target.getPlayerState();
-    const playerMessage = mapEventNumToName[currentPlayerState];
+    const infoMessage = mapEventNumToName[event.target.getPlayerState()];
 
     document.getElementById(infoId(event.target.a.id)).textContent =
-        playerMessage === 'paused' ? 'PAUSED' : playerMessage;
+        infoMessage === 'paused' ? 'PAUSED' : infoMessage;
 
     if (ioSocket.disconnected) {
         event.target.pauseVideo();
@@ -109,26 +108,27 @@ window.onYouTubeIframeAPIReady = () => {
     (function onlyIfSocketConnected() {
         if (socket.connected) {
             socket.emit('getVideoList', (videoList) => {
+                console.log({ videoList });
                 videoList.forEach((video, i) => {
-                    const playerIdentity = playerId(i);
-                    const infoIdentity = infoId(playerIdentity);
+                    const playerIdent = playerId(i);
+                    const infoIdent = infoId(playerIdent);
 
                     const wrapperDiv = document.createElement('div');
                     wrapperDiv.setAttribute('style', 'display: inline-block;');
 
                     const p = document.createElement('p');
-                    p.setAttribute('id', infoIdentity);
+                    p.setAttribute('id', infoIdent);
                     p.setAttribute('style', 'text-align: center;');
                     wrapperDiv.appendChild(p);
 
                     const div = document.createElement('div');
-                    div.setAttribute('id', playerIdentity);
+                    div.setAttribute('id', playerIdent);
                     wrapperDiv.appendChild(div);
 
                     scriptTagZero.parentNode.insertBefore(wrapperDiv, scriptTagZero);
 
                     // save all players to a global players object for access outside of event handlers
-                    players[playerIdentity] = new YT.Player(playerIdentity, {
+                    players[playerIdent] = new YT.Player(playerIdent, {
                         events: {
                             onReady: onPlayerReadyHandler.bind(null, socket),
                             onStateChange: onPlayerStateChangeHandler.bind(null, socket),
@@ -138,7 +138,10 @@ window.onYouTubeIframeAPIReady = () => {
                 });
             });
         } else {
-            setTimeout(onlyIfSocketConnected, 200);
+            setTimeout(() => {
+                console.log('onlyIfSocketConnected setTimeout called');
+                onlyIfSocketConnected();
+            }, 200);
         }
     })();
 };
