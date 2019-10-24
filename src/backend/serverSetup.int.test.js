@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop, no-loop-func, func-names, no-console, no-restricted-syntax */
+/* eslint-disable no-loop-func, func-names, no-console, no-restricted-syntax */
 
 const chai = require('chai');
 const io = require('socket.io-client');
@@ -24,20 +24,53 @@ async function createSockets(num = 0, sockets = []) {
     return createSockets(num, sockets.concat(newSocket));
 }
 
-async function closeSockets(sockets = []) {
-    if (sockets.length === 0) return;
+async function closeAllSockets(sockets = [], index = 0) {
+    if (index === sockets.length) return;
 
     await new Promise((resolve) => {
-        sockets
-            .pop()
-            .on('disconnect', resolve)
-            .close();
+        sockets[index].on('disconnect', resolve).close();
     });
 
-    closeSockets(sockets);
+    await closeAllSockets(sockets, index + 1);
 }
 
-describe('server', function() {
+async function runSocketTests(sockets = [], index = 0) {
+    if (index === sockets.length) return;
+
+    let messageCount = 0;
+    const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
+
+    await new Promise((resolve, reject) => {
+        sockets[index]
+            .on('playerControl', (message) => {
+                const expectedMessage = expectedMessages[messageCount];
+
+                messageCount += 1;
+
+                try {
+                    message.should.deep.equal(expectedMessage);
+                    if (messageCount === expectedMessages.length) {
+                        resolve();
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            })
+            .emit('playerStatus', ['player1', 'playing'])
+            .emit('playerStatus', ['player2', 'playing'])
+            .emit('playerStatus', ['player3', 'playing'])
+            .emit('playerStatus', ['player4', 'playing'])
+            .emit('playerStatus', ['player5', 'playing']);
+    });
+
+    await runSocketTests(sockets, index + 1);
+}
+
+/**
+ * ******** TEST SUITE ********
+ */
+
+describe('serverSetup', function() {
     let server = {};
     let sockets = [];
     let consoleLogBackup;
@@ -52,17 +85,19 @@ describe('server', function() {
 
     afterEach(async function() {
         // allow enough time to close all of the sockets
-        this.timeout(Math.max(10 * sockets.length, 2000));
+        this.timeout(Math.max(10 * sockets.length, this.timeout()));
+
+        console.log(this.timeout());
 
         // restore console.log
         console.log = consoleLogBackup;
 
-        await closeSockets(sockets);
+        await closeAllSockets(sockets);
 
         server.close();
     });
 
-    it('serverSetup should be an object', function() {
+    it('should be an object', function() {
         serverSetup.should.be.a('object');
     });
 
@@ -76,33 +111,7 @@ describe('server', function() {
 
             sockets = await createSockets(numberOfSockets);
 
-            for (const socket of sockets) {
-                let messageCount = 0;
-                const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
-
-                await new Promise((resolve, reject) => {
-                    socket
-                        .on('playerControl', (message) => {
-                            const expectedMessage = expectedMessages[messageCount];
-
-                            messageCount += 1;
-
-                            try {
-                                message.should.deep.equal(expectedMessage);
-                                if (messageCount === expectedMessages.length) {
-                                    resolve();
-                                }
-                            } catch (err) {
-                                reject(err);
-                            }
-                        })
-                        .emit('playerStatus', ['player1', 'playing'])
-                        .emit('playerStatus', ['player2', 'playing'])
-                        .emit('playerStatus', ['player3', 'playing'])
-                        .emit('playerStatus', ['player4', 'playing'])
-                        .emit('playerStatus', ['player5', 'playing']);
-                });
-            }
+            await runSocketTests(sockets);
         });
     }
 });
