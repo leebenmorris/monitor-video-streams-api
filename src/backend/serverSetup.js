@@ -1,11 +1,6 @@
-const http = require('http');
+const server = require('http').createServer();
 
-const express = require('express');
-const socketIO = require('socket.io');
-
-const app = express();
-const server = http.Server(app);
-const io = socketIO(server);
+const io = require('socket.io')(server);
 
 const maxPlaying = 3;
 
@@ -34,16 +29,11 @@ const videoList = [
     },
 ];
 
-// frontend served from /docs directory to suit github pages
-// app.use(express.static(`${__dirname}/../../docs`));
-
 io.on('connection', (socket) => {
     // eslint-disable-next-line no-console
     console.log(`Socket connected to ${socket.id}`);
 
-    if (!nowPlaying[socket.id]) {
-        nowPlaying[socket.id] = new Set();
-    }
+    nowPlaying[socket.id] = nowPlaying[socket.id] || new Set();
 
     socket.on('getVideoList', (cb) => {
         console.log('getVideoList called');
@@ -51,11 +41,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('playerStatus', ([player, status]) => {
-        if (status === 'playing') {
-            nowPlaying[socket.id].add(player);
-        } else {
-            nowPlaying[socket.id].delete(player);
-        }
+        // eslint-disable-next-line no-unused-expressions
+        status === 'playing'
+            ? nowPlaying[socket.id].add(player)
+            : nowPlaying[socket.id].delete(player);
 
         if (nowPlaying[socket.id].size > maxPlaying) {
             const indexOfPlayerToPause = nowPlaying[socket.id].size - 1 - maxPlaying;
