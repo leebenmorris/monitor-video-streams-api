@@ -24,25 +24,31 @@ async function createSocket() {
 }
 
 async function createSockets(num = 1) {
-    const theseSockets = [];
+    async function createEachSocket(qty, sockets) {
+        if (qty === 0) return sockets;
 
-    for (let i = 0; i < num; i += 1) {
         await asyncSetImmediate();
-        theseSockets.push(await createSocket());
+        const newSocket = await createSocket();
+
+        return createEachSocket(qty - 1, sockets.concat(newSocket));
     }
 
-    return theseSockets;
+    return createEachSocket(num, []);
 }
 
 async function closeAllSockets(sockets) {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const socket of sockets) {
-        await asyncSetImmediate();
-        await new Promise((resolve) => {
-            socket.on('disconnect', resolve);
+    function closeEachSocket(index) {
+        if (sockets.length === 0 || index < 0) return;
+
+        const socket = sockets[index];
+
+        setImmediate(() => {
+            socket.on('disconnect', closeEachSocket.bind(null, index - 1));
             socket.close();
         });
     }
+
+    return closeEachSocket(sockets.length - 1);
 }
 
 async function createAndTestSockets(numberOfSockets) {
