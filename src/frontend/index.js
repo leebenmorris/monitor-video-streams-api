@@ -112,6 +112,7 @@ window.onYouTubeIframeAPIReady = () => {
 
     (function onlyIfSocketConnected(retryCount = 1) {
         if (socket.connected) {
+            idSetText('socket-messages', `Connected to: ${socket.id}`);
             // eslint-disable-next-line no-param-reassign
             retryCount = 1;
 
