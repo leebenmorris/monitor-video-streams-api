@@ -10,3 +10,4 @@ babel.config.js
 nodemon.json
 README.md
 webpack.config.js
+*.test.js
