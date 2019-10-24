@@ -46,7 +46,7 @@ function ioConnectHandler() {
             players[id].playVideo();
         }
     });
-    idSetText('socket-messages', `Connected to: ${socket.id}`);
+    idSetText('socket-messages', `Connected to: ${socket.id}, previous player states restored`);
 }
 
 function ioPlayerControlHandler([id, command]) {
@@ -62,7 +62,10 @@ function ioDisconnectHandler() {
         player.pauseVideo();
     });
 
-    idSetText('socket-messages', 'Disconnected from socket.io server, so all videos paused');
+    idSetText(
+        'socket-messages',
+        'Disconnected from socket.io server, player stated saved, all videos paused',
+    );
 }
 
 function onPlayerReadyHandler(ioSocket, event) {
