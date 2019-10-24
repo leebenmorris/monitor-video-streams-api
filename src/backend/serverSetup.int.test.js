@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop, func-names, no-console, no-restricted-syntax */
+/* eslint-disable no-await-in-loop, no-loop-func, func-names, no-console, no-restricted-syntax */
 
 const chai = require('chai');
 const io = require('socket.io-client');
@@ -9,8 +9,10 @@ chai.should();
 
 const PORT = 1234;
 
-async function createSocket() {
-    return new Promise((resolve, reject) => {
+async function createSockets(num = 0, sockets = []) {
+    if (sockets.length === num) return sockets;
+
+    const newSocket = await new Promise((resolve, reject) => {
         io(`http://localhost:${PORT}`)
             .on('error', reject)
             .on('connect_error', reject)
@@ -18,59 +20,21 @@ async function createSocket() {
                 resolve(this);
             });
     });
-}
 
-async function createSockets(num = 1) {
-    const localSockets = [];
-
-    for (let i = 0; i < num; i += 1) {
-        localSockets.push(await createSocket());
-    }
-
-    return localSockets;
-}
-
-async function closeSocket(socket = {}) {
-    return new Promise((resolve) => {
-        socket.on('disconnect', resolve);
-        socket.close();
-    });
+    return createSockets(num, sockets.concat(newSocket));
 }
 
 async function closeSockets(sockets = []) {
-    for (const socket of sockets) {
-        await closeSocket(socket);
-    }
-}
+    if (sockets.length === 0) return;
 
-async function testSockets(sockets = []) {
-    for (const socket of sockets) {
-        let messageCount = 0;
-        const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
+    await new Promise((resolve) => {
+        sockets
+            .pop()
+            .on('disconnect', resolve)
+            .close();
+    });
 
-        await new Promise((resolve, reject) => {
-            socket
-                .on('playerControl', (message) => {
-                    const expectedMessage = expectedMessages[messageCount];
-
-                    messageCount += 1;
-
-                    try {
-                        message.should.deep.equal(expectedMessage);
-                        if (messageCount === expectedMessages.length) {
-                            resolve();
-                        }
-                    } catch (err) {
-                        reject(err);
-                    }
-                })
-                .emit('playerStatus', ['player1', 'playing'])
-                .emit('playerStatus', ['player2', 'playing'])
-                .emit('playerStatus', ['player3', 'playing'])
-                .emit('playerStatus', ['player4', 'playing'])
-                .emit('playerStatus', ['player5', 'playing']);
-        });
-    }
+    closeSockets(sockets);
 }
 
 describe('server', function() {
@@ -102,21 +66,43 @@ describe('server', function() {
         serverSetup.should.be.a('object');
     });
 
-    it("should respond with a 'pauseVideo' message if more than three status messages are sent for 1 connection", async function() {
-        const numberOfSockets = 1;
+    for (const numberOfSockets of [1, 1000]) {
+        const messageVariation =
+            numberOfSockets === 1 ? '1 connection' : `each of ${numberOfSockets} connections`;
 
-        sockets = await createSockets(numberOfSockets);
+        it(`should respond with a 'pauseVideo' message for the correct video player if more than three status messages are sent for ${messageVariation}`, async function() {
+            // allow enough time to create and test all of the sockets
+            this.timeout(Math.max(10 * numberOfSockets, 2000));
 
-        await testSockets(sockets);
-    });
+            sockets = await createSockets(numberOfSockets);
 
-    it("should respond with a 'pauseVideo' message if more than three status messages are sent for each of 1000 connections", async function() {
-        const numberOfSockets = 1000;
+            for (const socket of sockets) {
+                let messageCount = 0;
+                const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
-        this.timeout(Math.max(10 * numberOfSockets, 2000));
+                await new Promise((resolve, reject) => {
+                    socket
+                        .on('playerControl', (message) => {
+                            const expectedMessage = expectedMessages[messageCount];
 
-        sockets = await createSockets(numberOfSockets);
+                            messageCount += 1;
 
-        await testSockets(sockets);
-    });
+                            try {
+                                message.should.deep.equal(expectedMessage);
+                                if (messageCount === expectedMessages.length) {
+                                    resolve();
+                                }
+                            } catch (err) {
+                                reject(err);
+                            }
+                        })
+                        .emit('playerStatus', ['player1', 'playing'])
+                        .emit('playerStatus', ['player2', 'playing'])
+                        .emit('playerStatus', ['player3', 'playing'])
+                        .emit('playerStatus', ['player4', 'playing'])
+                        .emit('playerStatus', ['player5', 'playing']);
+                });
+            }
+        });
+    }
 });
