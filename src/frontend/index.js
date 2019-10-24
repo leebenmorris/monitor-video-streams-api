@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
-/* global YT, io */
+/* global YT */
 
+const io = require('socket.io-client');
 require('./index.css');
 
 const ioServerUrl = process.env.SOCKET_URL;
