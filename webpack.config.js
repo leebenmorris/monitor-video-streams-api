@@ -4,6 +4,8 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
+const isProd = process.env.NODE_ENV === 'production';
+
 module.exports = {
     entry: './src/frontend/index.js',
     plugins: [
@@ -17,7 +19,7 @@ module.exports = {
         new CleanWebpackPlugin(),
     ],
     output: {
-        path: path.resolve(__dirname, 'docs'),
+        path: path.resolve(__dirname, isProd ? 'docs' : 'dev-build'),
         filename: '[name].[contenthash].js',
     },
     // from here: https://medium.com/hackernoon/the-100-correct-way-to-split-your-chunks-with-webpack-f8a9df5b7758
@@ -53,7 +55,7 @@ module.exports = {
             },
         ],
     },
-    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+    mode: isProd ? 'production' : 'development',
     devServer: {
         open: true,
         port: 7090,
