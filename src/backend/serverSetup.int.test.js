@@ -48,20 +48,21 @@ async function closeAllSockets(sockets) {
 async function createAndTestSockets(numberOfSockets) {
     const theseSockets = await createSockets(numberOfSockets);
 
-    const socketMessageCounts = Array(theseSockets.length).fill(0);
+    // eslint-disable-next-line no-restricted-syntax
+    for (const socket of theseSockets) {
+        let messageCount = 0;
+        const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
-    const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
-
-    for (let i = 0; i < theseSockets.length; i += 1) {
         await new Promise((resolve, reject) => {
-            theseSockets[i]
+            socket
                 .on('playerControl', (message) => {
-                    const expectedMessage = expectedMessages[socketMessageCounts[i]];
-                    socketMessageCounts[i] += 1;
+                    const expectedMessage = expectedMessages[messageCount];
+
+                    messageCount += 1;
 
                     try {
                         message.should.deep.equal(expectedMessage);
-                        if (socketMessageCounts[i] === expectedMessages.length) {
+                        if (messageCount === expectedMessages.length) {
                             resolve();
                         }
                     } catch (err) {
@@ -111,7 +112,7 @@ describe('server', function() {
         sockets = await createAndTestSockets(1);
     });
 
-    it("should respond with a 'pauseVideo' message if more than three status messages are sent for 1000 connections", async function() {
+    it("should respond with a 'pauseVideo' message if more than three status messages are sent for each of 1000 connections", async function() {
         this.timeout(20e3);
 
         sockets = await createAndTestSockets(1000);
