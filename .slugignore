@@ -1,0 +1,12 @@
+.vscode
+docs
+src/frontend
+.eslintignore
+.eslint.json
+.gitignore
+.prettierignore
+.prettierrc.json
+babel.config.js
+nodemon.json
+README.md
+webpack.config.js
