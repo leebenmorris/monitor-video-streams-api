@@ -30,13 +30,9 @@ const videoList = [
 ];
 
 io.on('connection', (socket) => {
-    // eslint-disable-next-line no-console
-    console.log(`Socket connected to ${socket.id}`);
-
     nowPlaying[socket.id] = nowPlaying[socket.id] || new Set();
 
     socket.on('getVideoList', (cb) => {
-        console.log('getVideoList called');
         cb(videoList);
     });
 
