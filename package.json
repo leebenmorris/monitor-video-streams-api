@@ -10,13 +10,11 @@
         "test": "mocha \"src/**/*.test.js\"",
         "start": "node src/backend/serverStart.js",
         "start:dev": "concurrently webpack-dev-server nodemon",
-        "build": "NODE_ENV=production SOCKET_URL=https://monitor-video-streams-api.herokuapp.com webpack",
-        "build:dev": "webpack",
+        "build:frontend": "NODE_ENV=production SOCKET_URL=https://monitor-video-streams-api.herokuapp.com webpack",
+        "build:frontend:dev": "webpack",
         "test:watch": "npm run test -- --watch",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-src/serverStart.js}\"; }; run",
-        "eslint:rules:check": "run() { eslint --print-config \"${1:-src/serverStart.js}\" | eslint-config-prettier-check; }; run",
-        "copyPublicToDocs": "cp -R public/ docs/",
-        "lint-staged": "lint-staged"
+        "eslint:rules:check": "run() { eslint --print-config \"${1:-src/serverStart.js}\" | eslint-config-prettier-check; }; run"
     },
     "repository": {
         "type": "git",
@@ -58,9 +56,13 @@
         "socket.io": "^2.3.0",
         "socket.io-client": "^2.3.0"
     },
+    "lint-staged": {
+        "*.js": "npm run test"
+    },
     "husky": {
         "hooks": {
-            "pre-push": "run() { npm run build && git diff --exit-code; }; run"
+            "pre-commit": "lint-staged",
+            "pre-push": "run() { npm run build:frontend && git diff --exit-code; }; run"
         }
     }
 }
