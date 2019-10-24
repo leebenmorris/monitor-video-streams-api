@@ -101,6 +101,39 @@ describe('serverSetup', function() {
         serverSetup.should.be.a('object');
     });
 
+    it('should return a list of videos when requested', function(done) {
+        const expectedVideoList = [
+            {
+                videoId: 'hY7m5jjJ9mM',
+                height: 158,
+                width: 280,
+            },
+            {
+                videoId: 'F7uSppqT8bM',
+                height: 158,
+                width: 280,
+            },
+            {
+                videoId: 'rNSnfXl1ZjU',
+                height: 158,
+                width: 280,
+            },
+            {
+                videoId: '94PLgLKcGW8',
+                height: 158,
+                width: 280,
+            },
+        ];
+
+        createSockets(1).then((localSockets) => {
+            sockets = localSockets;
+            localSockets[0].emit('getVideoList', (videoList) => {
+                videoList.should.deep.equal(expectedVideoList);
+                done();
+            });
+        });
+    });
+
     for (const numberOfSockets of [1, 1000]) {
         const messageVariation =
             numberOfSockets === 1 ? '1 connection' : `each of ${numberOfSockets} connections`;
