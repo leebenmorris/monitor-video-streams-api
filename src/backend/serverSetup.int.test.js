@@ -1,5 +1,4 @@
-/* eslint-disable no-await-in-loop, func-names, no-console */
-const { promisify } = require('util');
+/* eslint-disable no-await-in-loop, func-names, no-console, no-restricted-syntax */
 
 const chai = require('chai');
 const io = require('socket.io-client');
@@ -9,8 +8,6 @@ const serverSetup = require('./serverSetup');
 chai.should();
 
 const PORT = 1234;
-
-const asyncSetImmediate = promisify(setImmediate);
 
 async function createSocket() {
     return new Promise((resolve, reject) => {
@@ -24,38 +21,30 @@ async function createSocket() {
 }
 
 async function createSockets(num = 1) {
-    async function createEachSocket(qty, sockets) {
-        if (qty === 0) return sockets;
+    const localSockets = [];
 
-        await asyncSetImmediate();
-        const newSocket = await createSocket();
-
-        return createEachSocket(qty - 1, sockets.concat(newSocket));
+    for (let i = 0; i < num; i += 1) {
+        localSockets.push(await createSocket());
     }
 
-    return createEachSocket(num, []);
+    return localSockets;
 }
 
-async function closeAllSockets(sockets) {
-    function closeEachSocket(index) {
-        if (sockets.length === 0 || index < 0) return;
+async function closeSocket(socket = {}) {
+    return new Promise((resolve) => {
+        socket.on('disconnect', resolve);
+        socket.close();
+    });
+}
 
-        const socket = sockets[index];
-
-        setImmediate(() => {
-            socket.on('disconnect', closeEachSocket.bind(null, index - 1));
-            socket.close();
-        });
+async function closeSockets(sockets = []) {
+    for (const socket of sockets) {
+        await closeSocket(socket);
     }
-
-    return closeEachSocket(sockets.length - 1);
 }
 
-async function createAndTestSockets(numberOfSockets) {
-    const theseSockets = await createSockets(numberOfSockets);
-
-    // eslint-disable-next-line no-restricted-syntax
-    for (const socket of theseSockets) {
+async function testSockets(sockets = []) {
+    for (const socket of sockets) {
         let messageCount = 0;
         const expectedMessages = [['player1', 'pauseVideo'], ['player2', 'pauseVideo']];
 
@@ -82,32 +71,31 @@ async function createAndTestSockets(numberOfSockets) {
                 .emit('playerStatus', ['player5', 'playing']);
         });
     }
-
-    return theseSockets;
 }
 
 describe('server', function() {
     let server = {};
     let sockets = [];
-    let consoleLog;
+    let consoleLogBackup;
 
     beforeEach(function() {
         // suppress console.log messages elsewhere in the code
-        consoleLog = console.log;
+        consoleLogBackup = console.log;
         console.log = () => {};
 
         server = serverSetup.listen(PORT);
     });
 
     afterEach(async function() {
-        this.timeout(Math.max(20 * sockets.length, 2000));
+        // allow enough time to close all of the sockets
+        this.timeout(Math.max(10 * sockets.length, 2000));
 
         // restore console.log
-        console.log = consoleLog;
+        console.log = consoleLogBackup;
+
+        await closeSockets(sockets);
 
         server.close();
-
-        await closeAllSockets(sockets);
     });
 
     it('serverSetup should be an object', function() {
@@ -115,12 +103,20 @@ describe('server', function() {
     });
 
     it("should respond with a 'pauseVideo' message if more than three status messages are sent for 1 connection", async function() {
-        sockets = await createAndTestSockets(1);
+        const numberOfSockets = 1;
+
+        sockets = await createSockets(numberOfSockets);
+
+        await testSockets(sockets);
     });
 
     it("should respond with a 'pauseVideo' message if more than three status messages are sent for each of 1000 connections", async function() {
-        this.timeout(20e3);
+        const numberOfSockets = 1000;
 
-        sockets = await createAndTestSockets(1000);
+        this.timeout(Math.max(10 * numberOfSockets, 2000));
+
+        sockets = await createSockets(numberOfSockets);
+
+        await testSockets(sockets);
     });
 });
