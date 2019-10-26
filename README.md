@@ -6,11 +6,29 @@ Front-end URL: https://leebenmorris.github.io/monitor-video-streams-api/
 
 Back-end URL: https://monitor-video-streams-api.herokuapp.com
 
-# **Description**
+---
+
+## Table of Contents
+
+-   [Description](#description)
+-   [Back-end](#back-end)
+    -   [Scalingstrategy](#scaling-strategy)
+-   [Front-end](#front-end)
+-   [Deployment](#deployment)
+    -   [Back-end](#deployment-back-end)
+    -   [Front-end](#deployment-front-end)
+-   [Building and running locally](#building-and-running-locally)
+-   [Testing locally](#testing-locally)
+
+---
+
+## **Description**
 
 The main focus of this project is the back-end server, but some effort has gone into building a simple front-end web page to demonstrate how the back-end works.
 
-The front-end is a static site and is hosted on github pages. The back-end is hosted on Heroku. These services were chosen as they are free and easy to use, the main point being to demonstrate the real-time communication between the front- and back-end across the internet.
+The back-end is hosted on Heroku. The front-end is a static site and is hosted on github pages. These services were chosen as they are free and easy to use, the main point being to demonstrate the real-time communication between the front- and back-end across the internet.
+
+---
 
 ## **Back-end**
 
@@ -34,10 +52,50 @@ As this service is potentially long running, it might not make sense to run it o
 
 As the video streaming is not handled by this API, the specifics of scaling that are outside of the scope of this project. But, generally speaking, video would be hosted on a CDN. This API simply provides a list of available videos to the front-end. This is currently a small list of YouTube identifiers with associated metadata (video width and height in this case), but could easily be something like a list of pre-signed URL's that allow access to videos hosted on something like the AWS CloudFront CDN which itself is backed by AWS S3.
 
-## Front-end
+---
 
-This is a simple demo web page that has 4 video elements and some message areas to show the user what is happening.
+## **Front-end**
+
+This is a simple demo web page that has 4 video elements and some message areas to let the user know what is happening.
 
 There is not much style to the page as it is really just a demonstrator for the back-end server.
 
-If the server is unavailable for any reason, all videos will pause until the server becomes available again. The currently playing states
+Saying that, I did try to have a little bit of fun with it. For example, if the socket.io server is unavailable for any reason, all videos will pause until the server becomes available again .The currently playing states are saved locally and restored when the server comes back up. Also, the videos will not display at all if the server is not available.
+
+The front-end sends player events (playing, paused) etc to the back-end, and in turn listens to player control messages sent from the back-end. This way, the back-end can take control of the playing of the videos. The only command it currently sends back is a pause command for the 4th oldest playing video.
+
+---
+
+## **Deployment**
+
+### **<a id="deployment-back-end"></a>Back-end**
+
+The back-end is hosted in a [Heroku](https://www.heroku.com) 'dyno'. This packages up the node.js server code into a self contained environment.
+
+The Heroku environment has been configured to build a new version of the back-end service when new code is pushed to the project's github repo. The repo has a `.slugignore` which list the files that are not part of the production build and Heroku makes use of this file to only include production files in the build.
+
+Each time a commit is performed for a file in the src/backend folder the backend test suite is run.
+
+### **<a id="deployment-front-end"></a>Front-end**
+
+The front-end is served from Github Pages. Each time changes are pushed to the github repository a fresh production front-end build is performed using a pre-push hook. If a new build has been created, the push is aborted so that the new build files can also be committed and pushed. Github pages serves files from the `/docs` folder, hence the build process places the bundle files there rather than to a 'public' folder.
+
+---
+
+## **Building and running locally**
+
+For this project to build and run locally a UNIX environment is required and nodejs 10.x with NPM 6.x needs to be available.
+
+There are a list of useful scripts in the [package.json](./package.json) file.
+
+To run both the front- and back-end with one command, from a terminal run `npm run start:all:dev`.
+
+To run the front- and back-end separately so that manual testing of the server being unavailable can the carried out, please run in separate terminal windows `npm run start:backend:dev` and `npm run start:frontend:dev`.
+
+---
+
+## **Testing locally**
+
+To run a test suite, please run `npm run test:backend`.
+
+There is currently no front-end test suite as the front-end is really just a demonstrator for the back-end.
