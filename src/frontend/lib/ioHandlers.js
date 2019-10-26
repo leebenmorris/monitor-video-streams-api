@@ -16,8 +16,6 @@ function ioConnectErrorHandler() {
 function ioConnectHandler() {
     const socket = this;
 
-    console.log(`Connected to socket ID: ${socket.id}`);
-
     idSetText('socket-messages', `Connected to socket ID: ${socket.id}`);
 }
 
