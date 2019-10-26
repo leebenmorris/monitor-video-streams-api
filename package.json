@@ -16,6 +16,7 @@
         "start:all:dev": "concurrently webpack-dev-server nodemon",
         "build:frontend": "NODE_ENV=production SOCKET_URL=https://monitor-video-streams-api.herokuapp.com webpack",
         "build:frontend:dev": "webpack",
+        "eslint": "eslint",
         "eslint:rules:list": "run() { eslint --print-config \"${1:-webpack.config.js}\"; }; run",
         "eslint:prettier:rules:check": "run() { eslint --print-config \"${1:-webpack.config.js}\" | eslint-config-prettier-check; }; run"
     },
@@ -60,7 +61,8 @@
         "socket.io-client": "^2.3.0"
     },
     "lint-staged": {
-        "src/backend/*.js": "npm run test:backend"
+        "src/backend/*.js": "npm run test:backend",
+        "*.js": "eslint"
     },
     "husky": {
         "hooks": {
