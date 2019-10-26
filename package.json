@@ -9,6 +9,7 @@
     "scripts": {
         "test:backend": "mocha \"src/backend/*.test.js\"",
         "test:backend:watch": "npm run test -- --watch",
+        "start": "npm run start:backend",
         "start:backend": "node src/backend/serverStart.js",
         "start:backend:dev": "nodemon",
         "start:frontend:dev": "webpack-dev-server",
