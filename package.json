@@ -7,8 +7,8 @@
         "node": ">=10 <11"
     },
     "scripts": {
-        "test": "mocha \"src/**/*.test.js\"",
-        "test:watch": "npm run test -- --watch",
+        "test:backend": "mocha \"src/backend/*.test.js\"",
+        "test:backend:watch": "npm run test -- --watch",
         "start:backend": "node src/backend/serverStart.js",
         "start:backend:dev": "nodemon",
         "start:frontend:dev": "webpack-dev-server",
@@ -59,7 +59,7 @@
         "socket.io-client": "^2.3.0"
     },
     "lint-staged": {
-        "*.js": "npm run test"
+        "src/backend/*.js": "npm run test:backend"
     },
     "husky": {
         "hooks": {
