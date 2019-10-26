@@ -1,57 +1,37 @@
-const server = require('http').createServer();
+const http = require('http');
 
-const io = require('socket.io')(server);
+const io = require('socket.io');
 
-const maxPlaying = 3;
+const getVideoList = require('./getVideoList');
 
-const nowPlaying = {};
+const server = http.createServer();
 
-const videoList = [
-    {
-        videoId: 'hY7m5jjJ9mM',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: 'F7uSppqT8bM',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: 'rNSnfXl1ZjU',
-        height: 158,
-        width: 280,
-    },
-    {
-        videoId: '94PLgLKcGW8',
-        height: 158,
-        width: 280,
-    },
-];
+const maxToPlay = 3;
 
-io.on('connection', (socket) => {
-    nowPlaying[socket.id] = nowPlaying[socket.id] || new Set();
+const usersPlayingLists = {};
 
-    socket.on('getVideoList', (cb) => {
-        cb(videoList);
-    });
+io(server).on('connection', (socket) => {
+    // Set used to store player IDs as it will automatically remove the identical older id's,
+    // and a particular player cannot be playing twice at the same time!
+    usersPlayingLists[socket.id] = usersPlayingLists[socket.id] || new Set();
 
-    socket.on('playerStatus', ([player, status]) => {
-        // eslint-disable-next-line no-unused-expressions
-        status === 'playing'
-            ? nowPlaying[socket.id].add(player)
-            : nowPlaying[socket.id].delete(player);
+    const nowPlayingList = usersPlayingLists[socket.id];
 
-        if (nowPlaying[socket.id].size > maxPlaying) {
-            const indexOfPlayerToPause = nowPlaying[socket.id].size - 1 - maxPlaying;
-            const playerToPause = [...nowPlaying[socket.id]][indexOfPlayerToPause];
-            socket.emit('playerControl', [playerToPause, 'pauseVideo']);
-        }
-    });
+    socket
+        .on('getVideoList', (cb) => getVideoList(cb))
+        .on('playerStatus', ([playerId, status]) => {
+            nowPlayingList[status === 'playing' ? 'add' : 'delete'](playerId);
 
-    socket.on('disconnect', () => {
-        delete nowPlaying[socket.id];
-    });
+            if (nowPlayingList.size > maxToPlay) {
+                const indexOfPlayerToPause = nowPlayingList.size - 1 - maxToPlay;
+                const playerToPause = [...nowPlayingList][indexOfPlayerToPause];
+
+                socket.emit('playerControl', [playerToPause, 'pauseVideo']);
+            }
+        })
+        .on('disconnect', () => {
+            delete usersPlayingLists[socket.id];
+        });
 });
 
 server.on('listening', () => {
