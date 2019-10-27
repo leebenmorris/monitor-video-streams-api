@@ -74,6 +74,8 @@ The back-end is hosted in a [Heroku](https://www.heroku.com) 'dyno'. This packag
 
 The Heroku environment has been configured to build a new version of the back-end service when new code is pushed to the project's github repo. The repo has a `.slugignore` which list the files that are not part of the production build and Heroku makes use of this file to only include production files in the build.
 
+The dyno's logs can be easily monitored using the Heroku CLI command `heroku logs --tail -a monitor-video-streams-api`, including any new builds happening due to changes picked up from github.
+
 Each time a commit is performed for a file in the src/backend folder the backend test suite is run.
 
 ### **<a id="deployment-front-end"></a>Front-end**
