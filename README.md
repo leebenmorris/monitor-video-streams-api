@@ -12,7 +12,7 @@ Back-end URL: https://monitor-video-streams-api.herokuapp.com
 
 -   [Description](#description)
 -   [Back-end](#back-end)
-    -   [Scalingstrategy](#scaling-strategy)
+    -   [Scaling strategy](#scaling-strategy)
 -   [Front-end](#front-end)
 -   [Deployment](#deployment)
     -   [Back-end](#deployment-back-end)
@@ -78,7 +78,7 @@ Each time a commit is performed for a file in the src/backend folder the backend
 
 ### **<a id="deployment-front-end"></a>Front-end**
 
-The front-end is served from Github Pages. Each time changes are pushed to the github repository a fresh production front-end build is performed using a pre-push hook. If a new build has been created, the push is aborted so that the new build files can also be committed and pushed. Github pages serves files from the `/docs` folder, hence the build process places the bundle files there rather than to a 'public' folder.
+The front-end is served from Github Pages. Each time changes are pushed to the github repository a fresh production front-end build is performed using a pre-push hook. If a new build has been created the push is aborted so that the new build files can also be committed and pushed. Github pages serves files from the `/docs` folder, hence the build process places the bundle files there rather than to a more typical 'public' folder.
 
 ---
 
